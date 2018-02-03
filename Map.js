@@ -30,6 +30,8 @@ class Map {
 	init() {
 		createCanvas(this.game_canvas.w, this.game_canvas.h);
 		this.tiles_sz = Math.min(this.game_canvas.w / this.getGameWidth(), this.game_canvas.h / this.getGameHeight());
+		console.log(this.game_canvas.w);
+		console.log(this.game_canvas.h);
 		for (let i = 0; i < this.nbr_player; i++)
 			this.objectives.push(Array(this.getNewObjective()));
 	}

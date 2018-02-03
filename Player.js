@@ -100,7 +100,8 @@ class Player {
 		stroke('#EE2');
 		if (!this.isMoving && this.moves.length > move_number)
 			line(this.pos.x * this.w + this.w / 2, this.pos.y * this.w + this.w / 2,
-				this.moves[move_number].x * this.w + this.w / 2, this.moves[move_number].y * this.w + this.w / 2);
+				this.moves[move_number].x * this.w + this.w / 2,
+				this.moves[move_number].y * this.w + this.w / 2);
 	}
 
 	show() {
@@ -109,20 +110,18 @@ class Player {
 							y: this.pos.y - (this.direction.y * (1 - this.animationFrame / 15))};
 			console.table(framePos);
 			image(this.sprite, (framePos.x) * this.w, (framePos.y) * this.w,
-			this.w, this.w, (2 + floor(this.animationFrame / 2)) * 32,
-			this.spriteRow * 32 + 32 *
-			(((this.direction.x == 1) ? 1 : 0) +
-			((this.direction.x == -1) ? 2 : 0) +
-			((this.direction.y == 1) ? 0 : 0) +
-			((this.direction.y == -1) ? 3 : 0)), 32, 32);
+			this.w, this.w, (2 + floor(this.animationFrame / 2)) * 128,
+			this.spriteRow * 128 + 128 *
+			(((this.direction.x == 1) ? 1 : 0) + ((this.direction.x == -1) ? 2 : 0) +
+			((this.direction.y == 1) ? 0 : 0) + ((this.direction.y == -1) ? 3 : 0)), 128, 128);
 			if (this.animationFrame++ >= 15) {
 				this.isMoving = false;
 				testForObjectives();
 			}
-		}
-		else {
+		} else {
 			fill(this.color());
-			image(this.sprite, this.pos.x * this.w, this.pos.y * this.w, this.w, this.w, floor(this.animationFrame / 8) * 32, this.spriteRow * 32, 32, 32);
+			image(this.sprite, this.pos.x * this.w, this.pos.y * this.w, this.w, this.w,
+				floor(this.animationFrame / 8) * 128, this.spriteRow * 128, 128, 128);
 			this.animationFrame = (this.animationFrame + 1) % 24;
 		}
 	}

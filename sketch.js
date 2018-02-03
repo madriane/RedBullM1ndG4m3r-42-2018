@@ -2,31 +2,31 @@
 var players;
 var activePlayerId = 0;
 var gameMap;
-var gameCanvas = {w:680, h:480};
-var blockIds = [
-	[129,19,19,19,19,19,19,19,113],
-	[51,15,15,15,15,15,15,15,67],
-	[51,15,15,15,15,15,15,15,67],
-	[51,15,15,15,15,15,15,15,67],
-	[51,15,15,15,15,15,15,15,67],
-	[97,35,35,35,35,35,35,35,81]
-];
+var gameCanvas = {w:640, h:32 * 16};
 
 var move_number = 0;
 var max_move_nbr = 15;
 
 var gameOver = false;
 
+var blockIds = getBlocks();
+
 function preload() {img = loadImage('tilesetbase.png'); sprites = loadImage('sprite.png');}
+
+function getBlocks() {
+	var blockIds = map1;
+	console.table(blockIds)
+	return (blockIds);
+}
 
 function setup() {
 	gameMap = new Map(img, blockIds, gameCanvas, 4);
 	gameMap.init();
 	players = [
-		new Player('AIR', 1, 1, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 0),
-		new Player('WATER', 1, gameMap.getMapHeight(), gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 4),
-		new Player('EARTH', gameMap.getMapWidth(), 1, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 8),
-		new Player('FIRE', gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 12)
+		new Player('AIR', 2, 2, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 0),
+		new Player('WATER', 2, gameMap.getMapHeight() - 1, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 4),
+		new Player('EARTH', gameMap.getMapWidth() - 1, 2, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 8),
+		new Player('FIRE', gameMap.getMapWidth() - 1, gameMap.getMapHeight() - 1, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 12)
 	];
 	takenObjectives = [];
 }
@@ -52,7 +52,8 @@ function draw() {
 		gameMap.getObjectives(i).forEach((objective, j) => {
 			if (i === activePlayerId && isInArray(objective, takenObjectives))
 				fill('yellow');
-			ellipse(objective.x * gameMap.getTilesz() + gameMap.getTilesz() / 2, objective.y * gameMap.getTilesz() + gameMap.getTilesz() / 2, gameMap.getTilesz() / 2);
+			ellipse(objective.x * gameMap.getTilesz() + gameMap.getTilesz() / 2,
+				objective.y * gameMap.getTilesz() + gameMap.getTilesz() / 2, gameMap.getTilesz() / 2);
 			fill(p.colorWithAlpha(i === activePlayerId ? 1 : 0.5));
 		});
 	});
