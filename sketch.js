@@ -2,25 +2,21 @@
 var players;
 var activePlayerId = 0;
 var gameMap;
-var gameCanvas = {w:640, h:32 * 16};
 
 var move_number = 0;
 var max_move_nbr = 15;
 
 var gameOver = false;
 
-var blockIds = getBlocks();
+var blockIds = map1;
 
 function preload() {img = loadImage('tilesetbase.png'); sprites = loadImage('sprite.png');}
 
-function getBlocks() {
-	var blockIds = map1;
-	console.table(blockIds)
-	return (blockIds);
-}
-
 function setup() {
-	gameMap = new Map(img, blockIds, gameCanvas, 4);
+	console.log(img);
+	console.log(blockIds);
+	gameMap = new Map(img, blockIds, 4);
+	console.log('Map:', gameMap.getMapWidth(), gameMap.getMapHeight());
 	gameMap.init();
 	players = [
 		new Player('AIR', 2, 2, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 0),
@@ -32,7 +28,7 @@ function setup() {
 }
 
 function draw() {
-	translate((gameCanvas.w - gameMap.getGameWidth() * gameMap.getTilesz())/2, (gameCanvas.h - gameMap.getGameHeight() * gameMap.getTilesz())/2);
+	translate((gameMap.game_canvas.w - gameMap.getGameWidth() * gameMap.getTilesz())/2, (gameMap.game_canvas.h - gameMap.getGameHeight() * gameMap.getTilesz())/2);
 	background(2);
 	stroke(0);
 	fill(51);
@@ -57,10 +53,11 @@ function draw() {
 			fill(p.colorWithAlpha(i === activePlayerId ? 1 : 0.5));
 		});
 	});
-	fill(255);
+	fill(255, 255, 255);
 	textSize(32);
-	text(move_number + '/' + max_move_nbr + ' MOVES', 0, 30);
+	text(move_number + '/' + max_move_nbr + ' MOVES', 50, 30);
 	if (gameOver) {
+		console.log('GAME OVER')
 		fill('#E23');
 		text('Game Over', 250, 30);
 	}

@@ -8,8 +8,8 @@ var lineToMovesMap = [
 	2 | 4,
 	1 | 8,
 	4 | 8,
-	1 | 4,
 	2 | 8,
+	1 | 4,
 	2,
 	8,
 	1,
@@ -17,19 +17,37 @@ var lineToMovesMap = [
 	0
 ];
 
-class Map {
-	constructor(_texture, _block_ids, _game_canvas, _nbr_player) {
+class Map { 
+	constructor(_texture, _block_ids, _nbr_player) {
+		console.log("lihb");
 		this.texture = _texture;
 		this.block_ids = _block_ids;
-		this.game_canvas = _game_canvas;
 		this.nbr_player = _nbr_player;
 		this.tiles_sz;
 		this.objectives = [];
+		this.game_canvas = [];
 	}
 
 	init() {
+		var w = window,
+		d = document,
+		e = d.documentElement,
+		g = d.getElementsByTagName('body')[0],
+		x = w.innerWidth || e.clientWidth || g.clientWidth,
+		y = w.innerHeight|| e.clientHeight|| g.clientHeight;
+
+		var size_x = this.block_ids[1].length;
+		var size_y = this.block_ids.length;
+
+		this.tiles_sz = Math.min(x / size_x, y / size_y);
+
+		this.game_canvas.w = this.tiles_sz * size_x;
+		this.game_canvas.h = this.tiles_sz * size_y;
+		this.border_x = ((x > this.game_canvas.w) ? ((x - this.game_canvas.w) / 2) : null);
+		this.border_y = ((y > this.game_canvas.h) ? ((y - this.game_canvas.h) / 2) : null);
+
 		createCanvas(this.game_canvas.w, this.game_canvas.h);
-		this.tiles_sz = Math.min(this.game_canvas.w / this.getGameWidth(), this.game_canvas.h / this.getGameHeight());
+
 		console.log(this.game_canvas.w);
 		console.log(this.game_canvas.h);
 		for (let i = 0; i < this.nbr_player; i++)
