@@ -33,8 +33,10 @@ class Player {
 
 	resetPos() {
 		this.pos = clony(this.moves[0]);
-		if (this.moves.length > 1)
-			this.direction = this.moves[1];
+		if (this.moves.length >  1)
+			this.direction = {x: this.moves[1].x - this.pos.x, y: this.moves[1].y - this.pos.y};
+		else
+			this.direction = clony(this.pos);
 	}
 
 	clearOldMoves() {
@@ -125,10 +127,15 @@ class Player {
 	showDirection(move_number) {
 		stroke('#EE2');
 		if (!this.isMoving && this.moves.length > move_number)
-			line(this.pos.x * this.w + this.w / 2, this.pos.y * this.w + this.w / 2,
+			if (this.direction.x != 0 || this.direction.y != 0)
+			image(misc, (this.pos.x + 1 / 2) * this.w, (this.pos.y + 1 / 2) * this.w, this.w, this.w,
+				spriteSz * ((this.direction.x > 0) ? 3 : ((this.direction.x < 0) ? 1 :
+					((this.direction.y > 0) ? 4 : ((this.direction.y < 0) ? 2 : 0)))),
+				spriteSz * this.spriteRow, spriteSz, spriteSz);
+/*			line(this.pos.x * this.w + this.w / 2, this.pos.y * this.w + this.w / 2,
 				this.moves[move_number].x * this.w + this.w / 2,
 				this.moves[move_number].y * this.w + this.w / 2);
-	}
+*/	}
 
 	show() {
 		if (this.elementAnimationFrame >= 0)
@@ -143,8 +150,10 @@ class Player {
 			(((this.direction.x == 1) ? 1 : 0) + ((this.direction.x == -1) ? 2 : 0) +
 			((this.direction.y == 1) ? 0 : 0) + ((this.direction.y == -1) ? 3 : 0)), spriteSz, spriteSz);
 			if (this.animationFrame++ >= 15) {
-				this.direction = {x: this.moves[move_number + 1].x - this.pos.x,
-					y: this.moves[move_number + 1].y - this.pos.y};
+				if (this.moves.length > move_number + 1)
+					this.direction = {x: this.moves[move_number + 1].x - this.pos.x, y: this.moves[move_number + 1].y - this.pos.y};
+				else
+					this.directiom = clony(this.pos);
 				this.isMoving = false;
 				this.elementAnimationFrame = 0;
 				testForObjectives(this.elementId);
