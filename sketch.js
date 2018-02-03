@@ -28,7 +28,6 @@ function setup() {
 		new Player('EARTH', gameMap.getMapWidth() - 2, 1, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 2),
 		new Player('FIRE', gameMap.getMapWidth() - 2, gameMap.getMapHeight() - 2, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 3)
 	];
-	takenObjectives = [];
 }
 
 function draw() {
@@ -43,26 +42,19 @@ function draw() {
 	players.forEach((p, i) => {
 		fill(p.colorWithAlpha(i === activePlayerId ? 1 : 0.5));
 		gameMap.getObjectives(i).forEach((objective, j) => {
-			if (i === activePlayerId)
-			{
-				if (isInArray(objective, takenObjectives)) {
-					image(sprites, objective.x * gameMap.getTilesz(), objective.y * gameMap.getTilesz(),
-						gameMap.getTilesz(), gameMap.getTilesz(),
-						floor((animationFrame % 20) / 4 + 3) * spriteSz, (16 + p.spriteRow) * spriteSz,
-						spriteSz, spriteSz);
-				} else {
-					image(misc, objective.x * gameMap.getTilesz(), objective.y * gameMap.getTilesz(),
-						gameMap.getTilesz(), gameMap.getTilesz(), 0, p.spriteRow * spriteSz, spriteSz, spriteSz);
-					image(sprites, objective.x * gameMap.getTilesz(), objective.y * gameMap.getTilesz(),
-						gameMap.getTilesz(), gameMap.getTilesz(),
-						floor((animationFrame % 12) / 4) * spriteSz, (16 + p.spriteRow) * spriteSz,
-						spriteSz, spriteSz);
-				}
-			}
-			else {
+			if (isInArray(objective, p.takenObjectives)) {
 				image(sprites, objective.x * gameMap.getTilesz(), objective.y * gameMap.getTilesz(),
 					gameMap.getTilesz(), gameMap.getTilesz(),
-					floor((animationFrame % 12) / 4) * spriteSz, (16 + p.spriteRow) * spriteSz,
+					floor((animationFrame % 20) / 4 + 3) * spriteSz, (16 + p.elementId) * spriteSz,
+					spriteSz, spriteSz);
+			}
+			else {
+				if (i === activePlayerId)
+					image(misc, objective.x * gameMap.getTilesz(), objective.y * gameMap.getTilesz(),
+						gameMap.getTilesz(), gameMap.getTilesz(), 0, p.elementId * spriteSz, spriteSz, spriteSz);
+				image(sprites, objective.x * gameMap.getTilesz(), objective.y * gameMap.getTilesz(),
+					gameMap.getTilesz(), gameMap.getTilesz(),
+					floor((animationFrame % 12) / 4) * spriteSz, (16 + p.elementId) * spriteSz,
 					spriteSz, spriteSz);
 			}
 		});
@@ -71,7 +63,7 @@ function draw() {
 	players.forEach((p, i)=>{
 		if (activePlayerId === i)
 			image(misc, p.pos.x * gameMap.getTilesz(), p.pos.y * gameMap.getTilesz(),
-				gameMap.getTilesz(), gameMap.getTilesz(), 0, p.spriteRow * spriteSz, spriteSz, spriteSz);
+				gameMap.getTilesz(), gameMap.getTilesz(), 0, p.elementId * spriteSz, spriteSz, spriteSz);
 		else
 			p.showDirection(move_number + 1);
 		p.show();
@@ -124,30 +116,31 @@ function keyPressed() {
 	});
 }
 
-function testForObjectives() {
-		if (isInArray(players[activePlayerId].pos, gameMap.getObjectives(activePlayerId))
-			&& !isInArray(players[activePlayerId].pos, takenObjectives)) {
-			takenObjectives.push(players[activePlayerId].pos);
-		}
-		if (takenObjectives.length === gameMap.getObjectives(activePlayerId).length)
-		{
-			takenObjectives = [];
-			move_number = 0;
-			gameMap.getNextObjectives(activePlayerId);
-			activePlayerId = (activePlayerId + 1) % players.length;
-			if (activePlayerId === 0) {
-				max_move_nbr += 5;
-			}
-			players[activePlayerId].clearOldMoves();
-			players.forEach((p, i)=> {
-				p.resetPos();
-			});
-		}
-		else if (move_number === max_move_nbr)
-		{
-			gameOver = true;
-		}
+function testForObjectives(elementId) {
+	player = players[elementId];
+	if (isInArray(player.pos, gameMap.getObjectives(elementId))
+		&& !isInArray(player.pos, player.takenObjectives)) {
+		player.takenObjectives.push(player.pos);
 	}
+	if (elementId === activePlayerId &&
+		player.takenObjectives.length === gameMap.getObjectives(activePlayerId).length)
+	{
+		move_number = 0;
+		gameMap.getNextObjectives(activePlayerId);
+		activePlayerId = (activePlayerId + 1) % players.length;
+		if (activePlayerId === 0) {
+			max_move_nbr += 5;
+		}
+		players[activePlayerId].clearOldMoves();
+		players.forEach((p, i)=> {
+			p.clearObjectives();
+			p.resetPos();
+		});
+	}
+	else if (move_number === max_move_nbr) {
+		gameOver = true;
+	}
+}
 
 clony = (obj) => JSON.parse(JSON.stringify(obj))
 comp = (obj1, obj2) => (JSON.stringify(obj1) === JSON.stringify(obj2))

@@ -1,17 +1,20 @@
 
 class Player {
-	constructor(_type, _x, _y, _mw, _mh, _ps, _sprite, s_row) {
+	constructor(_type, _x, _y, _mw, _mh, _ps, _sprite, e_id) {
 		this.type = _type;
 		this.pos = {x: _x, y: _y};
 		this.mw = _mw;
 		this.mh = _mh;
 		this.w = _ps;
+
 		this.moves = Array(clony(this.pos));
 		this.animationFrame = 0;
+		this.elementAnimationFrame = 0;
 		this.sprite = _sprite;
-		this.spriteRow = s_row;
+		this.elementId = e_id;
 		this.isMoving = false;
 		this.direction = {x: 0, y: 0};
+		this.takenObjectives = Array();
 	}
 
 	move(_x, _y) {
@@ -20,7 +23,7 @@ class Player {
 		this.pos = {x: x, y: y};
 		this.savePos();
 		this.isMoving = true;
-		this.animationFrame = 0;
+		this.animationFrame = -1;
 		this.direction = {x: _x, y: _y};
 	}
 
@@ -30,15 +33,20 @@ class Player {
 
 	resetPos() {
 		this.pos = clony(this.moves[0]);
+		if (this.moves.length > 1)
+			this.direction = this.moves[1];
 	}
 
 	clearOldMoves() {
 		this.moves = [this.moves[0]];
 	}
 
+	clearObjectives() {
+		this.takenObjectives = [];
+	}
+
 	getNMove(nb) {
-		if (this.moves.length > nb)
-		{
+		if (this.moves.length > nb) {
 			this.direction = {x: this.moves[nb].x - this.pos.x, y: this.moves[nb].y - this.pos.y};
 			this.pos = clony(this.moves[nb]);
 			this.isMoving = true;
@@ -64,6 +72,24 @@ class Player {
 				return (false);
 		}
 		return (false);
+	}
+
+	elementAnimation() {
+		switch (this.type) {
+			case "AIR":
+				break;
+			case "FIRE":
+				break;
+			case "EARTH":
+				break;
+			case "WATER":
+				break;
+			default:
+				break;
+		}
+		if (this.elementAnimationFrame++ > 15) {
+			this.elementAnimationFrame = 0;
+		}
 	}
 
 	color() {
@@ -105,27 +131,32 @@ class Player {
 	}
 
 	show() {
+		if (this.elementAnimationFrame >= 0)
+			this.elementAnimation();
 		if (this.isMoving) {
 			let framePos = {x: this.pos.x - (this.direction.x * (1 - this.animationFrame / 15)),
 							y: this.pos.y - (this.direction.y * (1 - this.animationFrame / 15))};
 			console.table(framePos);
 			image(this.sprite, (framePos.x) * this.w, (framePos.y) * this.w,
 			this.w, this.w, (2 + floor(this.animationFrame / 2)) * spriteSz,
-			this.spriteRow * 4 * spriteSz + spriteSz *
+			this.elementId * 4 * spriteSz + spriteSz *
 			(((this.direction.x == 1) ? 1 : 0) + ((this.direction.x == -1) ? 2 : 0) +
 			((this.direction.y == 1) ? 0 : 0) + ((this.direction.y == -1) ? 3 : 0)), spriteSz, spriteSz);
 			if (this.animationFrame++ >= 15) {
+				this.direction = {x: this.moves[move_number + 1].x - this.pos.x,
+					y: this.moves[move_number + 1].y - this.pos.y};
 				this.isMoving = false;
-				testForObjectives();
+				this.elementAnimationFrame = 0;
+				testForObjectives(this.elementId);
 			}
 		} else {
 			fill(this.color());
 			image(this.sprite, this.pos.x * this.w, this.pos.y * this.w, this.w, this.w,
 				floor(this.animationFrame / 8) * spriteSz,
-				this.spriteRow * 4 * spriteSz, spriteSz, spriteSz);
+				this.elementId * 4 * spriteSz, spriteSz, spriteSz);
 			image(this.sprite, this.pos.x * this.w, this.pos.y * this.w, this.w, this.w,
 				floor(this.animationFrame / 8) * spriteSz,
-				this.spriteRow * 4 * spriteSz, spriteSz, spriteSz);
+				this.elementId * 4 * spriteSz, spriteSz, spriteSz);
 			this.animationFrame = (this.animationFrame + 1) % 24;
 		}
 	}
