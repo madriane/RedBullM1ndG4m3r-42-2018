@@ -40,27 +40,36 @@ function draw() {
 			stroke(0);
 		p.show();
 	});
-	noFill();
-	stroke('#E33');
-	gameMap.getObjectives(activePlayerId).forEach((objective, i) => {
-		rect(objective.x * gameMap.getTilesz(), objective.y * gameMap.getTilesz(), gameMap.getTilesz(), gameMap.getTilesz());
+	stroke(0);
+	players.forEach((p, i) => {
+		fill(p.colorWithAlpha(i == activePlayerId ? 1 : 0.5));
+		gameMap.getObjectives(i).forEach((objective, i) => {
+			ellipse(objective.x * gameMap.getTilesz() + gameMap.getTilesz() / 2, objective.y * gameMap.getTilesz() + gameMap.getTilesz() / 2, gameMap.getTilesz() / 2);
+		});
 	});
-
 }
 
 function keyPressed() {
 	let player = players[activePlayerId];
 	switch (keyCode) {
-		case 39:
-			player.move(1, 0);
-			break;
 		case 37:
+			if (!gameMap.isMovable(activePlayerId, players, 0))
+				return ;
 			player.move(-1, 0);
 			break;
 		case 38:
+			if (!gameMap.isMovable(activePlayerId, players, 1))
+				return ;
 			player.move(0, -1);
 			break;
+		case 39:
+			if (!gameMap.isMovable(activePlayerId, players, 2))
+				return ;
+			player.move(1, 0);
+			break;
 		case 40:
+			if (!gameMap.isMovable(activePlayerId, players, 3))
+				return ;
 			player.move(0, 1);
 			break;
 		default:
@@ -75,10 +84,9 @@ function keyPressed() {
 	if (isInArray(player.pos, gameMap.getObjectives(activePlayerId)))
 	{
 		move_number = 0;
+		gameMap.getNextObjectives(activePlayerId);
 		activePlayerId = (activePlayerId + 1) % players.length;
 		players[activePlayerId].clearOldMoves();
-		if (0==activePlayerId)
-			gameMap.getNextObjectives();
 		players.forEach((p, i)=> {
 			p.resetPos();
 		});

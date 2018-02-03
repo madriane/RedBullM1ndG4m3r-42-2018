@@ -1,8 +1,26 @@
+var lineToMovesMap = [
+	1 | 2 | 4 | 8,
+	1 | 4 | 8,
+	1 | 2 | 4,
+	2 | 4 | 8,
+	1 | 2 | 8,
+	1 | 2,
+	2 | 4,
+	1 | 8,
+	4 | 8,
+	1 | 4,
+	2 | 8,
+	2,
+	8,
+	1,
+	4,
+	0
+];
 
 class Map {
 	constructor(_texture, _block_ids, _game_canvas, _nbr_player) {
 		this.texture = _texture;
-		this.block_id = _block_ids;
+		this.block_ids = _block_ids;
 		this.game_canvas = _game_canvas;
 		this.nbr_player = _nbr_player;
 		this.tiles_sz;
@@ -20,9 +38,26 @@ class Map {
 		if (typeof destination === 'object')
 			;//teleport
 		else {
-			let playerposition = players[player_id].getPosition();
-			let move = parseInt(blockIds[destination.y][destination.x] / 16);
-			
+			let playerpos = players[player_id].pos;
+			let move = lineToMovesMap[parseInt(floor(this.block_ids[playerpos.y - 1][playerpos.x - 1] / 16))];
+			if (move & (1 << destination))
+			{
+				let dest = {x: playerpos.x - (destination == 0 ? 1 : 0) + (destination == 2 ? 1 : 0), y: playerpos.y - (destination == 1 ? 1 : 0) + (destination == 3 ? 1 : 0)};
+				let movable = true;
+				players.forEach((p, i) => {
+					console.log(dest);
+					console.log(p.pos);
+					console.log(comp(p.pos, dest));
+					if (i != player_id && comp(p.pos, dest))
+						movable = false;
+				});
+				if (movable)
+					return (true);
+				else
+					return (false);
+			}
+			else
+				return (false);
 		}
 	}
 
@@ -45,19 +80,19 @@ class Map {
 	}
 
 	getMapHeight() {
-		return this.block_id.length;
+		return this.block_ids.length;
 	}
 
 	getMapWidth() {
-		return this.block_id[0].length;
+		return this.block_ids[0].length;
 	}
 	
 	getGameHeight() {
-		return this.block_id.length + 2;
+		return this.block_ids.length + 2;
 	}
 
 	getGameWidth() {
-		return this.block_id[0].length + 2;
+		return this.block_ids[0].length + 2;
 	}
 
 	getObjectives(player_id) {
@@ -66,11 +101,9 @@ class Map {
 		return this.objectives[player_id];
 	}
 
-	getNextObjectives() {
-		for (let i = 0; i < this.nbr_player; i++) {
+	getNextObjectives(playerId) {
 			let objective = this.getNewObjective();
-			this.objectives[i].push(objective);
-		}
+			this.objectives[playerId].push(objective);
 		return this.objectives;
 	}
 

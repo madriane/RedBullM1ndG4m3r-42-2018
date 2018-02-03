@@ -36,15 +36,28 @@ class Player {
 		}
 	}
 
-	show() {
+	color() {
 		switch (this.type) {
 			case "FIRE":
-				fill(200, 15, 36);
-				break;
+				return (color(200, 15, 36));
 			case "WATER":
-				fill(100, 100, 200);
+				return (color(100, 100, 200));
 				break;
 		}
+	}
+
+	colorWithAlpha(alpha) {
+		switch (this.type) {
+			case "FIRE":
+				return (color(200, 15, 36, alpha * 255));
+			case "WATER":
+				return (color(100, 100, 200, alpha * 255));
+				break;
+		}
+	}
+
+	show() {
+		fill(this.color());
 		rect(this.pos.x * this.w + this.w / 4, this.pos.y * this.w + this.w / 4, this.w / 2, this.w / 2);
 	}
 }
