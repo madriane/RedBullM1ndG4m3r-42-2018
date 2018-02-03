@@ -33,8 +33,8 @@ class Map {
 		d = document,
 		e = d.documentElement,
 		g = d.getElementsByTagName('body')[0],
-		x = w.innerWidth || e.clientWidth || g.clientWidth,
-		y = w.innerHeight|| e.clientHeight|| g.clientHeight;
+		x = (w.innerWidth || e.clientWidth || g.clientWidth) - 20,
+		y = (w.innerHeight|| e.clientHeight|| g.clientHeight) - 20;
 
 		var size_x = this.block_ids[1].length;
 		var size_y = this.block_ids.length;
@@ -103,14 +103,6 @@ class Map {
 	getMapWidth() {
 		return this.block_ids[0].length;
 	}
-	
-	getGameHeight() {
-		return this.block_ids.length + 2;
-	}
-
-	getGameWidth() {
-		return this.block_ids[0].length + 2;
-	}
 
 	getObjectives(player_id) {
 		if (player_id === undefined)
@@ -129,10 +121,13 @@ class Map {
 		let _x, _y, newobjective;
 		while ( found ) {
 			found = false;
-			_x = floor(random(this.getMapWidth()) + 1);
-			_y = floor(random(this.getMapHeight()) + 1);
-			newobjective = {x: _x, y:_y};
-			found = isIn2DArray(newobjective, this.objectives)
+			_x = floor(random(this.getMapWidth()));
+			_y = floor(random(this.getMapHeight()));
+			newobjective = {x: _x, y: _y};
+			found = isIn2DArray(newobjective, this.objectives);
+			console.table(newobjective);
+			if (floor(this.block_ids[_y][_x] / 16) === 15)
+				found = true;
 		}
 		return newobjective;
 	}

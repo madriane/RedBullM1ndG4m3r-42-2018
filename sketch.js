@@ -1,57 +1,82 @@
 
 var players;
-var activePlayerId = 0;
 var gameMap;
+var spriteSz = 128;
 
-var move_number = 0;
-var max_move_nbr = 15;
-
-var gameOver = false;
-
-var blockIds = map1;
-
-function preload() {img = loadImage('tilesetbase.png'); sprites = loadImage('sprite.png');}
+function preload() {
+	img = loadImage('tilesetbase.png');
+	sprites = loadImage('sprite.png');
+	misc = loadImage('miscellious.png');
+}
 
 function setup() {
+	move_number = 0;
+	gameOver = false;
+	blockIds = map1;
+	activePlayerId = 0;
+	animationFrame = 0;
+
 	console.log(img);
 	console.log(blockIds);
 	gameMap = new Map(img, blockIds, 4);
 	console.log('Map:', gameMap.getMapWidth(), gameMap.getMapHeight());
 	gameMap.init();
+	max_move_nbr = floor((gameMap.getMapWidth() + gameMap.getMapHeight() * 1.5) / 5) * 5;
 	players = [
 		new Player('AIR', 1, 1, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 0),
-		new Player('WATER', 1, gameMap.getMapHeight() - 2, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 4),
-		new Player('EARTH', gameMap.getMapWidth() - 2, 1, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 8),
-		new Player('FIRE', gameMap.getMapWidth() - 2, gameMap.getMapHeight() - 2, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 12)
+		new Player('WATER', 1, gameMap.getMapHeight() - 2, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 1),
+		new Player('EARTH', gameMap.getMapWidth() - 2, 1, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 2),
+		new Player('FIRE', gameMap.getMapWidth() - 2, gameMap.getMapHeight() - 2, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 3)
 	];
 	takenObjectives = [];
 }
 
 function draw() {
+//		Show map
 	background(2);
 	stroke(0);
 	fill(51);
-	rect(0, 0, gameMap.getGameWidth() * gameMap.getTilesz(), gameMap.getGameHeight() * gameMap.getTilesz());
+	rect(0, 0, gameMap.getMapWidth() * gameMap.getTilesz(), gameMap.getMapHeight() * gameMap.getTilesz());
 	stroke(255);
 	gameMap.drawMap();
+//		Show objectives
+	players.forEach((p, i) => {
+		fill(p.colorWithAlpha(i === activePlayerId ? 1 : 0.5));
+		gameMap.getObjectives(i).forEach((objective, j) => {
+			if (i === activePlayerId)
+			{
+				if (isInArray(objective, takenObjectives)) {
+					image(sprites, objective.x * gameMap.getTilesz(), objective.y * gameMap.getTilesz(),
+						gameMap.getTilesz(), gameMap.getTilesz(),
+						floor((animationFrame % 20) / 4 + 3) * spriteSz, (16 + p.spriteRow) * spriteSz,
+						spriteSz, spriteSz);
+				} else {
+					image(misc, objective.x * gameMap.getTilesz(), objective.y * gameMap.getTilesz(),
+						gameMap.getTilesz(), gameMap.getTilesz(), 0, p.spriteRow * spriteSz, spriteSz, spriteSz);
+					image(sprites, objective.x * gameMap.getTilesz(), objective.y * gameMap.getTilesz(),
+						gameMap.getTilesz(), gameMap.getTilesz(),
+						floor((animationFrame % 12) / 4) * spriteSz, (16 + p.spriteRow) * spriteSz,
+						spriteSz, spriteSz);
+				}
+			}
+			else {
+				image(sprites, objective.x * gameMap.getTilesz(), objective.y * gameMap.getTilesz(),
+					gameMap.getTilesz(), gameMap.getTilesz(),
+					floor((animationFrame % 12) / 4) * spriteSz, (16 + p.spriteRow) * spriteSz,
+					spriteSz, spriteSz);
+			}
+		});
+	});
+//		Show players
 	players.forEach((p, i)=>{
 		if (activePlayerId === i)
-			;
+			image(misc, p.pos.x * gameMap.getTilesz(), p.pos.y * gameMap.getTilesz(),
+				gameMap.getTilesz(), gameMap.getTilesz(), 0, p.spriteRow * spriteSz, spriteSz, spriteSz);
 		else
 			p.showDirection(move_number + 1);
 		p.show();
 	});
-	stroke(0);
-	players.forEach((p, i) => {
-		fill(p.colorWithAlpha(i === activePlayerId ? 1 : 0.5));
-		gameMap.getObjectives(i).forEach((objective, j) => {
-			if (i === activePlayerId && isInArray(objective, takenObjectives))
-				fill('yellow');
-			ellipse(objective.x * gameMap.getTilesz() + gameMap.getTilesz() / 2,
-				objective.y * gameMap.getTilesz() + gameMap.getTilesz() / 2, gameMap.getTilesz() / 2);
-			fill(p.colorWithAlpha(i === activePlayerId ? 1 : 0.5));
-		});
-	});
+//		Shows text
 	fill(255, 255, 255);
 	textSize(32);
 	text(move_number + '/' + max_move_nbr + ' MOVES', 50, 30);
@@ -60,6 +85,8 @@ function draw() {
 		fill('#E23');
 		text('Game Over', 350, 30);
 	}
+
+	animationFrame++;
 }
 
 function keyPressed() {

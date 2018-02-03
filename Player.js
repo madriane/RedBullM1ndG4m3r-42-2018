@@ -110,10 +110,10 @@ class Player {
 							y: this.pos.y - (this.direction.y * (1 - this.animationFrame / 15))};
 			console.table(framePos);
 			image(this.sprite, (framePos.x) * this.w, (framePos.y) * this.w,
-			this.w, this.w, (2 + floor(this.animationFrame / 2)) * 128,
-			this.spriteRow * 128 + 128 *
+			this.w, this.w, (2 + floor(this.animationFrame / 2)) * spriteSz,
+			this.spriteRow * 4 * spriteSz + spriteSz *
 			(((this.direction.x == 1) ? 1 : 0) + ((this.direction.x == -1) ? 2 : 0) +
-			((this.direction.y == 1) ? 0 : 0) + ((this.direction.y == -1) ? 3 : 0)), 128, 128);
+			((this.direction.y == 1) ? 0 : 0) + ((this.direction.y == -1) ? 3 : 0)), spriteSz, spriteSz);
 			if (this.animationFrame++ >= 15) {
 				this.isMoving = false;
 				testForObjectives();
@@ -121,7 +121,11 @@ class Player {
 		} else {
 			fill(this.color());
 			image(this.sprite, this.pos.x * this.w, this.pos.y * this.w, this.w, this.w,
-				floor(this.animationFrame / 8) * 128, this.spriteRow * 128, 128, 128);
+				floor(this.animationFrame / 8) * spriteSz,
+				this.spriteRow * 4 * spriteSz, spriteSz, spriteSz);
+			image(this.sprite, this.pos.x * this.w, this.pos.y * this.w, this.w, this.w,
+				floor(this.animationFrame / 8) * spriteSz,
+				this.spriteRow * 4 * spriteSz, spriteSz, spriteSz);
 			this.animationFrame = (this.animationFrame + 1) % 24;
 		}
 	}
