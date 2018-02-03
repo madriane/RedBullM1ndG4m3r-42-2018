@@ -45,10 +45,7 @@ class Map {
 				let dest = {x: playerpos.x - (destination == 0 ? 1 : 0) + (destination == 2 ? 1 : 0), y: playerpos.y - (destination == 1 ? 1 : 0) + (destination == 3 ? 1 : 0)};
 				let movable = true;
 				players.forEach((p, i) => {
-					console.log(dest);
-					console.log(p.pos);
-					console.log(comp(p.pos, dest));
-					if (i != player_id && comp(p.pos, dest))
+					if (i != player_id && p.willBeOccupied(dest, move_number))
 						movable = false;
 				});
 				if (movable)
@@ -102,8 +99,8 @@ class Map {
 	}
 
 	getNextObjectives(playerId) {
-			let objective = this.getNewObjective();
-			this.objectives[playerId].push(objective);
+		let objective = this.getNewObjective();
+		this.objectives[playerId].push(objective);
 		return this.objectives;
 	}
 
