@@ -19,16 +19,15 @@ function setup() {
 	console.log('Map:', gameMap.getMapWidth(), gameMap.getMapHeight());
 	gameMap.init();
 	players = [
-		new Player('AIR', 2, 2, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 0),
-		new Player('WATER', 2, gameMap.getMapHeight() - 1, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 4),
-		new Player('EARTH', gameMap.getMapWidth() - 1, 2, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 8),
-		new Player('FIRE', gameMap.getMapWidth() - 1, gameMap.getMapHeight() - 1, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 12)
+		new Player('AIR', 1, 1, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 0),
+		new Player('WATER', 1, gameMap.getMapHeight() - 2, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 4),
+		new Player('EARTH', gameMap.getMapWidth() - 2, 1, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 8),
+		new Player('FIRE', gameMap.getMapWidth() - 2, gameMap.getMapHeight() - 2, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 12)
 	];
 	takenObjectives = [];
 }
 
 function draw() {
-	translate((gameMap.game_canvas.w - gameMap.getGameWidth() * gameMap.getTilesz())/2, (gameMap.game_canvas.h - gameMap.getGameHeight() * gameMap.getTilesz())/2);
 	background(2);
 	stroke(0);
 	fill(51);
@@ -59,7 +58,7 @@ function draw() {
 	if (gameOver) {
 		console.log('GAME OVER')
 		fill('#E23');
-		text('Game Over', 250, 30);
+		text('Game Over', 350, 30);
 	}
 }
 

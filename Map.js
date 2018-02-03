@@ -17,7 +17,7 @@ var lineToMovesMap = [
 	0
 ];
 
-class Map { 
+class Map {
 	constructor(_texture, _block_ids, _nbr_player) {
 		console.log("lihb");
 		this.texture = _texture;
@@ -59,7 +59,7 @@ class Map {
 			;//teleport
 		else {
 			let playerpos = players[player_id].pos;
-			let move = lineToMovesMap[parseInt(floor(this.block_ids[playerpos.y - 1][playerpos.x - 1] / 16))];
+			let move = lineToMovesMap[parseInt(floor(this.block_ids[playerpos.y][playerpos.x] / 16))];
 			if (move & (1 << destination))
 			{
 				let dest = {x: playerpos.x - (destination == 0 ? 1 : 0) + (destination == 2 ? 1 : 0), y: playerpos.y - (destination == 1 ? 1 : 0) + (destination == 3 ? 1 : 0)};
@@ -81,7 +81,7 @@ class Map {
 	drawMap() {
 		blockIds.forEach((row, i)=>{
 			row.forEach((texture_id, j)=>{
-				this.drawTile((j + 1) * this.getTilesz(), (i + 1) * this.getTilesz(), texture_id)
+				this.drawTile(j * this.getTilesz(), i * this.getTilesz(), texture_id)
 			})
 		});
 	}
