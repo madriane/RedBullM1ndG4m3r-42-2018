@@ -110,7 +110,11 @@ class Player {
 			console.table(framePos);
 			image(this.sprite, (framePos.x) * this.w, (framePos.y) * this.w,
 			this.w, this.w, (2 + floor(this.animationFrame / 2)) * 32,
-			this.spriteRow * 32, 32, 32);
+			this.spriteRow * 32 + 32 *
+			(((this.direction.x == 1) ? 1 : 0) +
+			((this.direction.x == -1) ? 2 : 0) +
+			((this.direction.y == 1) ? 0 : 0) +
+			((this.direction.y == -1) ? 3 : 0)), 32, 32);
 			if (this.animationFrame++ >= 15) {
 				this.isMoving = false;
 				testForObjectives();

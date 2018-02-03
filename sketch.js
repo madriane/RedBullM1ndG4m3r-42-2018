@@ -24,9 +24,9 @@ function setup() {
 	gameMap.init();
 	players = [
 		new Player('AIR', 1, 1, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 0),
-		new Player('WATER', 1, gameMap.getMapHeight(), gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 1),
-		new Player('EARTH', gameMap.getMapWidth(), 1, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 2),
-		new Player('FIRE', gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 3)
+		new Player('WATER', 1, gameMap.getMapHeight(), gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 4),
+		new Player('EARTH', gameMap.getMapWidth(), 1, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 8),
+		new Player('FIRE', gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 12)
 	];
 	takenObjectives = [];
 }
