@@ -4,9 +4,10 @@ var gameMap;
 var spriteSz = 128;
 
 function preload() {
-	img = loadImage('tilesetbase.png');
+	img = loadImage('tiles_grey_bg.png');
 	sprites = loadImage('sprite.png');
-	misc = loadImage('miscellious.png');
+	misc = loadImage('misc.png');
+	ghost_fx = loadImage('ghost_fx.png');
 }
 
 function setup() {
@@ -15,11 +16,9 @@ function setup() {
 	blockIds = map1;
 	activePlayerId = 0;
 	animationFrame = 0;
+	animations = [];
 
-	console.log(img);
-	console.log(blockIds);
 	gameMap = new Map(img, blockIds, 4);
-	console.log('Map:', gameMap.getMapWidth(), gameMap.getMapHeight());
 	gameMap.init();
 	max_move_nbr = floor((gameMap.getMapWidth() + gameMap.getMapHeight() * 1.5) / 5) * 5;
 	players = [
@@ -42,16 +41,17 @@ function draw() {
 	players.forEach((p, i) => {
 		fill(p.colorWithAlpha(i === activePlayerId ? 1 : 0.5));
 		gameMap.getObjectives(i).forEach((objective, j) => {
-			if (isInArray(objective, p.takenObjectives)) {
+			if (!isInArray(objective, p.takenObjectives)) {
 				image(sprites, objective.x * gameMap.getTilesz(), objective.y * gameMap.getTilesz(),
 					gameMap.getTilesz(), gameMap.getTilesz(),
 					floor((animationFrame % 20) / 4 + 3) * spriteSz, (16 + p.elementId) * spriteSz,
 					spriteSz, spriteSz);
-			}
-			else {
 				if (i === activePlayerId)
 					image(misc, objective.x * gameMap.getTilesz(), objective.y * gameMap.getTilesz(),
-						gameMap.getTilesz(), gameMap.getTilesz(), 0, p.elementId * spriteSz, spriteSz, spriteSz);
+						gameMap.getTilesz(), gameMap.getTilesz(), 1 * spriteSz, p.elementId * spriteSz,
+						spriteSz, spriteSz);
+			}
+			else {
 				image(sprites, objective.x * gameMap.getTilesz(), objective.y * gameMap.getTilesz(),
 					gameMap.getTilesz(), gameMap.getTilesz(),
 					floor((animationFrame % 12) / 4) * spriteSz, (16 + p.elementId) * spriteSz,
@@ -66,19 +66,31 @@ function draw() {
 				gameMap.getTilesz(), gameMap.getTilesz(), 0, p.elementId * spriteSz, spriteSz, spriteSz);
 		else
 			p.showDirection(move_number + 1);
+		if (activePlayerId != i && !p.isMoving)
+			p.elementAnticipation();
 		p.show();
+	});
+	animations.forEach((anim, i) => {
+		anim.run();
+		if (anim.shouldStop())
+			animations.splice(i, 1);
 	});
 //		Shows text
 	fill(255, 255, 255);
 	textSize(32);
 	text(move_number + '/' + max_move_nbr + ' MOVES', 50, 30);
 	if (gameOver) {
-		console.log('GAME OVER')
 		fill('#E23');
 		text('Game Over', 350, 30);
 	}
 
 	animationFrame++;
+}
+
+function newAnimation(anim) {
+	if (anim instanceof Animation == true) {
+		animations.push(anim);
+	}
 }
 
 function keyPressed() {
@@ -109,11 +121,11 @@ function keyPressed() {
 		default:
 			return ;
 	}
-	move_number++;
 	players.forEach((p, i)=> {
 		if (i != activePlayerId)
-			p.getNMove(move_number);
+			p.getNMove(move_number + 1);
 	});
+	move_number++;
 }
 
 function testForObjectives(elementId) {
@@ -126,10 +138,11 @@ function testForObjectives(elementId) {
 		player.takenObjectives.length === gameMap.getObjectives(activePlayerId).length)
 	{
 		move_number = 0;
+		animations = [];
 		gameMap.getNextObjectives(activePlayerId);
 		activePlayerId = (activePlayerId + 1) % players.length;
 		if (activePlayerId === 0) {
-			max_move_nbr += 5;
+			max_move_nbr += 10;
 		}
 		players[activePlayerId].clearOldMoves();
 		players.forEach((p, i)=> {
@@ -137,8 +150,13 @@ function testForObjectives(elementId) {
 			p.resetPos();
 		});
 	}
-	else if (move_number === max_move_nbr) {
-		gameOver = true;
+	else {
+		let canMove = false;
+		for (let i = 0; i < 4; i++)
+			if (gameMap.isMovable(activePlayerId, players, i))
+				canMove = true;
+		if (canMove === false || move_number === max_move_nbr)
+			gameOver = true;
 	}
 }
 

@@ -9,7 +9,6 @@ class Player {
 
 		this.moves = Array(clony(this.pos));
 		this.animationFrame = 0;
-		this.elementAnimationFrame = 0;
 		this.sprite = _sprite;
 		this.elementId = e_id;
 		this.isMoving = false;
@@ -18,13 +17,15 @@ class Player {
 	}
 
 	move(_x, _y) {
+		if (this.type === "EARTH")
+			newAnimation(this.elementAnimation());
 		let x = max(1, min(this.pos.x + _x, this.mw));
 		let y = max(1, min(this.pos.y + _y, this.mh));
 		this.pos = {x: x, y: y};
 		this.savePos();
 		this.isMoving = true;
-		this.animationFrame = -1;
 		this.direction = {x: _x, y: _y};
+		this.animationFrame = 0;
 	}
 
 	savePos() {
@@ -36,7 +37,7 @@ class Player {
 		if (this.moves.length >  1)
 			this.direction = {x: this.moves[1].x - this.pos.x, y: this.moves[1].y - this.pos.y};
 		else
-			this.direction = clony(this.pos);
+			this.direction = {x: 0, y: 0};
 	}
 
 	clearOldMoves() {
@@ -49,6 +50,8 @@ class Player {
 
 	getNMove(nb) {
 		if (this.moves.length > nb) {
+			if (this.type === "EARTH")
+				newAnimation(this.elementAnimation());
 			this.direction = {x: this.moves[nb].x - this.pos.x, y: this.moves[nb].y - this.pos.y};
 			this.pos = clony(this.moves[nb]);
 			this.isMoving = true;
@@ -61,51 +64,269 @@ class Player {
 			return (true);
 		else if (!(this.moves.length > move_number + 1) && comp(pos, this.pos))
 			return (true);
+		let occupied = false;
 		switch (this.type) {
 			case "AIR":
-				break ;
+				if (move_number + 1 < this.moves.length) {
+					let currentTile = clony(this.moves[move_number + 1]);
+					while (gameMap.isMovableDirection(currentTile, this.direction)) {
+						currentTile = {x: currentTile.x + this.direction.x, y: currentTile.y + this.direction.y};
+						if (comp(pos, currentTile))
+							occupied = true;
+					}
+				}
+				break;
 			case "FIRE":
-				break ;
+				if (move_number + 1 < this.moves.length) {
+					[{x:-1, y:0}, {x:0, y:-1}, {x:1, y:0}, {x:0, y:1}].forEach((axis, i) => {
+						let currentTile = clony(this.moves[move_number + 1]);
+						let j = 0;
+						while (gameMap.isMovableDirection(currentTile, axis) && j++ < 2) {
+							currentTile = {x: currentTile.x + axis.x, y: currentTile.y + axis.y};
+							if (comp(pos, currentTile))
+								occupied = true;
+						}
+					});
+				}
+				break;
 			case "EARTH":
-				break ;
+				let tiles = this.moves.slice(max(0, move_number - 9), move_number + 1);
+				tiles.forEach((currentTile, i) => {
+					if (comp(pos, currentTile))
+						occupied = true;
+				});
+				break;
 			case "WATER":
-				break ;
+				if (move_number + 1 < this.moves.length) {
+					[{x:-1, y:0}, {x:-1, y:-1}, {x:0, y:-1}, {x:1, y:-1}, {x:1, y:0},
+					 {x:1, y:1}, {x:0, y:1}, {x:-1, y:1}].forEach((axis, i) => {
+						let currentTile = {x: this.pos.x, y: this.pos.y};
+						if (gameMap.isMovableDirection(currentTile, axis)) {
+							currentTile = {x: currentTile.x + axis.x, y: currentTile.y + axis.y};
+						if (comp(pos, currentTile))
+							occupied = true;
+						}
+					});
+				}
+				break;
 			default:
-				return (false);
+				break;
+		}
+		return (occupied);
+	}
+
+	elementAnimation() {
+		let list = [];
+		switch (this.type) {
+			case "AIR":
+				let currentTile = clony(this.pos);
+				while (gameMap.isMovableDirection(currentTile, this.direction)) {
+					currentTile = {x: currentTile.x + this.direction.x, y: currentTile.y + this.direction.y};
+					list.push(clony(currentTile));
+				}
+				if (list.length > 0) {
+					return  (new Animation({tileList: list, direction: this.direction},
+						(anim) => {
+							anim.parms.tileList.forEach((currentTile) => {
+								push();
+								let w = gameMap.getTilesz();
+								translate(currentTile.x * w + w / 2, currentTile.y * w + w / 2);
+								rotate(radians((anim.parms.direction.x ?
+									(anim.parms.direction.x < 0 ? 180 : 0) :
+									(anim.parms.direction.y < 0 ? -90 : 90))));
+								image(ghost_fx, -w / 2, -w / 2, w, w,
+									floor(anim.frame / 5) * spriteSz,
+									0 * spriteSz, spriteSz, spriteSz);
+								pop();
+							});
+						},
+						(anim) => {
+							return (anim.frame >= 25);
+						}
+					));
+				}
+				break;
+			case "FIRE":
+				[{x:-1, y:0}, {x:0, y:-1}, {x:1, y:0}, {x:0, y:1}].forEach((axis, i) => {
+					let currentTile = clony(this.pos);
+					let j = 0;
+					while (gameMap.isMovableDirection(currentTile, axis) && j++ < 2) {
+						currentTile = {x: currentTile.x + axis.x, y: currentTile.y + axis.y};
+						list.push(clony(currentTile));
+					}
+				});
+				if (list.length > 0) {
+					return  (new Animation({tileList: list},
+						(anim) => {
+							anim.parms.tileList.forEach((currentTile) => {
+								push();
+								let w = gameMap.getTilesz();
+								translate(currentTile.x * w + w / 2, currentTile.y * w + w / 2);
+								image(ghost_fx, -w / 2, -w / 2, w, w,
+									floor(anim.frame / 5) * spriteSz,
+									3 * spriteSz, spriteSz, spriteSz);
+								pop();
+							});
+						},
+						(anim) => {
+							return (anim.frame >= 25);
+						}
+					));
+				}
+				break;
+			case "EARTH":
+				return (new Animation({tile: this.pos, move_nb: move_number},
+					(anim) => {
+						let w = gameMap.getTilesz();
+						image(ghost_fx, anim.parms.tile.x * w, anim.parms.tile.y * w, w, w,
+							floor((move_number - anim.parms.move_nb - 1) / 2) * spriteSz,
+							2 * spriteSz, spriteSz, spriteSz);
+					},
+					(anim) => {
+						return (move_number > anim.parms.move_nb + 10);
+					}
+				));
+				break;
+			case "WATER":
+				[{x:-1, y:0}, {x:-1, y:-1}, {x:0, y:-1}, {x:1, y:-1}, {x:1, y:0},
+				 {x:1, y:1}, {x:0, y:1}, {x:-1, y:1}].forEach((axis, i) => {
+					let currentTile = {x: this.pos.x - this.direction.x, y: this.pos.y - this.direction.y};
+					if (gameMap.isMovableDirection(currentTile, axis)) {
+						currentTile = {x: currentTile.x + axis.x, y: currentTile.y + axis.y};
+						list.push(clony(currentTile));
+					}
+				});
+				if (list.length > 0) {
+					return  (new Animation({tileList: list},
+						(anim) => {
+							anim.parms.tileList.forEach((currentTile) => {
+								push();
+								let w = gameMap.getTilesz();
+								translate(currentTile.x * w + w / 2, currentTile.y * w + w / 2);
+								image(ghost_fx, -w / 2, -w / 2, w, w,
+									floor(anim.frame / 5) * spriteSz,
+									1 * spriteSz, spriteSz, spriteSz);
+								pop();
+							});
+						},
+						(anim) => {
+							return (anim.frame >= 25);
+						}
+					));
+				}
+				break;
+			default:
+				break;
 		}
 		return (false);
 	}
 
-	elementAnimation() {
+	elementAnticipation() {
 		switch (this.type) {
 			case "AIR":
+				if (move_number + 1 < this.moves.length) {
+					let currentTile = clony(this.moves[move_number + 1]);
+					while (gameMap.isMovableDirection(currentTile, this.direction)) {
+						currentTile = {x: currentTile.x + this.direction.x, y: currentTile.y + this.direction.y};
+						push();
+						translate(currentTile.x * this.w + this.w / 2, currentTile.y * this.w + this.w / 2);
+						rotate(radians((this.direction.x ?
+							(this.direction.x < 0 ? 180 : 0) : (this.direction.y < 0 ? -90 : 90))));
+						fill(this.colorWithAlpha(0.5));
+						stroke(this.color('dark'));
+						if (gameMap.isMovableDirection(currentTile, this.direction))
+							rect(-this.w / 2, -this.w / 4, this.w , this.w / 2);
+						else
+							rect(-this.w / 2, -this.w / 4, this.w * 3 / 4 , this.w / 2);
+						pop();
+					}
+				}
 				break;
 			case "FIRE":
+				if (move_number + 1 < this.moves.length) {
+					[{x:-1, y:0}, {x:0, y:-1}, {x:1, y:0}, {x:0, y:1}].forEach((axis, i) => {
+						let currentTile = clony(this.moves[move_number + 1]);
+						let j = 0;
+						while (gameMap.isMovableDirection(currentTile, axis) && j++ < 2) {
+							currentTile = {x: currentTile.x + axis.x, y: currentTile.y + axis.y};
+							push();
+							translate(currentTile.x * this.w + this.w / 2, currentTile.y * this.w + this.w / 2);
+							rotate(radians((axis.x ?
+								(axis.x < 0 ? 180 : 0) : (axis.y < 0 ? -90 : 90))));
+							fill(this.colorWithAlpha(0.5));
+							stroke(this.color('dark'));
+							if (j == 1)
+								rect(-this.w / 2, -this.w / 4, this.w , this.w / 2);
+							else
+								rect(-this.w / 2, -this.w / 4, this.w * 3 / 4 , this.w / 2);
+							pop();
+						}
+					});
+				}
 				break;
 			case "EARTH":
+				if (this.moves.length > 1) {
+					let tiles = this.moves.slice(max(0, move_number - 9), move_number + 1);
+					tiles.forEach((tile, i) => {
+						push();
+						translate(tile.x * this.w + this.w / 2, tile.y * this.w + this.w / 2);
+						fill(this.colorWithAlpha(0.5));
+						stroke(this.color('dark'));
+						rect(-this.w / 4, -this.w / 4, this.w / 2, this.w / 2);
+						pop();
+					});
+				}
 				break;
 			case "WATER":
+				if (move_number + 1 < this.moves.length) {
+					[{x:-1, y:0}, {x:-1, y:-1}, {x:0, y:-1}, {x:1, y:-1}, {x:1, y:0},
+					 {x:1, y:1}, {x:0, y:1}, {x:-1, y:1}].forEach((axis, i) => {
+						let currentTile = {x: this.pos.x, y: this.pos.y};
+						if (gameMap.isMovableDirection(currentTile, axis)) {
+							currentTile = {x: currentTile.x + axis.x, y: currentTile.y + axis.y};
+							push();
+							translate(currentTile.x * this.w + this.w / 2, currentTile.y * this.w + this.w / 2);
+							fill(this.colorWithAlpha(0.5));
+							stroke(this.color('dark'));
+							rect(-this.w / 4, -this.w / 4, this.w / 2, this.w / 2);
+							pop();
+						}
+					});
+				}
 				break;
 			default:
 				break;
-		}
-		if (this.elementAnimationFrame++ > 15) {
-			this.elementAnimationFrame = 0;
 		}
 	}
 
-	color() {
-		switch (this.type) {
-			case "AIR":
-				return (color(200, 200, 200));
-			case "FIRE":
-				return (color(200, 15, 36));
-			case "EARTH":
-				return (color(36, 15, 36));
-			case "WATER":
-				return (color(100, 100, 200));
-			default:
-				break;
+	color(tone) {
+		if (tone === 'dark') {
+			switch (this.type) {
+				case "AIR":
+					return (color(150, 150, 150));
+				case "FIRE":
+					return (color(130, 15, 25));
+				case "EARTH":
+					return (color(25, 15, 25));
+				case "WATER":
+					return (color(50, 50, 130));
+				default:
+					break;
+			}
+		}
+		else {
+			switch (this.type) {
+				case "AIR":
+					return (color(200, 200, 200));
+				case "FIRE":
+					return (color(200, 15, 36));
+				case "EARTH":
+					return (color(70, 50, 50));
+				case "WATER":
+					return (color(100, 100, 200));
+				default:
+					break;
+			}
 		}
 	}
 
@@ -124,38 +345,42 @@ class Player {
 		}
 	}
 
+//				console.log(lineToMovesMap[gameMap.getTileAt(currentTile.x, currentTile.y)] &
+//						1 << );
 	showDirection(move_number) {
 		stroke('#EE2');
 		if (!this.isMoving && this.moves.length > move_number)
-			if (this.direction.x != 0 || this.direction.y != 0)
-			image(misc, (this.pos.x + 1 / 2) * this.w, (this.pos.y + 1 / 2) * this.w, this.w, this.w,
-				spriteSz * ((this.direction.x > 0) ? 3 : ((this.direction.x < 0) ? 1 :
-					((this.direction.y > 0) ? 4 : ((this.direction.y < 0) ? 2 : 0)))),
-				spriteSz * this.spriteRow, spriteSz, spriteSz);
-/*			line(this.pos.x * this.w + this.w / 2, this.pos.y * this.w + this.w / 2,
-				this.moves[move_number].x * this.w + this.w / 2,
-				this.moves[move_number].y * this.w + this.w / 2);
-*/	}
+			if (!comp({x: 0, y: 0}, this.direction))
+			image(misc, ((this.pos.x + 1 / 2) - 1 / 2 + this.direction.x / 2) * this.w,
+				((this.pos.y + 1 / 2) - 1 / 2 + this.direction.y / 2) * this.w,
+				this.w, this.w,
+				spriteSz * (((this.direction.x ? (this.direction.x < 0 ? 0 : 2) :
+					(this.direction.y < 0 ? 1 : 3)) + 2)),
+				spriteSz * this.elementId, spriteSz, spriteSz);
+	}
 
 	show() {
-		if (this.elementAnimationFrame >= 0)
-			this.elementAnimation();
 		if (this.isMoving) {
 			let framePos = {x: this.pos.x - (this.direction.x * (1 - this.animationFrame / 15)),
 							y: this.pos.y - (this.direction.y * (1 - this.animationFrame / 15))};
-			console.table(framePos);
 			image(this.sprite, (framePos.x) * this.w, (framePos.y) * this.w,
-			this.w, this.w, (2 + floor(this.animationFrame / 2)) * spriteSz,
-			this.elementId * 4 * spriteSz + spriteSz *
-			(((this.direction.x == 1) ? 1 : 0) + ((this.direction.x == -1) ? 2 : 0) +
-			((this.direction.y == 1) ? 0 : 0) + ((this.direction.y == -1) ? 3 : 0)), spriteSz, spriteSz);
+				this.w, this.w, (2 + floor(this.animationFrame / 2)) * spriteSz,
+				this.elementId * 4 * spriteSz + spriteSz *
+				(((this.direction.x == 1) ? 1 : 0) + ((this.direction.x == -1) ? 2 : 0) +
+				((this.direction.y == 1) ? 0 : 0) + ((this.direction.y == -1) ? 3 : 0)), spriteSz, spriteSz);
+			if (this.animationFrame === 0 && this.type === "WATER")
+				newAnimation(this.elementAnimation());
+			if (this.animationFrame === 6 && this.type === "AIR")
+				newAnimation(this.elementAnimation());
+			if (this.animationFrame === 15 && this.type === "FIRE")
+				newAnimation(this.elementAnimation());
 			if (this.animationFrame++ >= 15) {
 				if (this.moves.length > move_number + 1)
-					this.direction = {x: this.moves[move_number + 1].x - this.pos.x, y: this.moves[move_number + 1].y - this.pos.y};
-				else
-					this.directiom = clony(this.pos);
+					this.direction = {x: this.moves[move_number + 1].x - this.pos.x,
+										y: this.moves[move_number + 1].y - this.pos.y};
+				else if (players[activePlayerId] != this)
+					this.direction = {x: 0, y: 0};
 				this.isMoving = false;
-				this.elementAnimationFrame = 0;
 				testForObjectives(this.elementId);
 			}
 		} else {
