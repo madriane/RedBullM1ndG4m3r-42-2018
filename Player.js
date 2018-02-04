@@ -1,26 +1,23 @@
 
 class Player {
-	constructor(_type, _x, _y, _mw, _mh, _ps, _sprite, e_id) {
+	constructor(_type, _pos, _ps, _sprite, e_id) {
 		this.type = _type;
-		this.pos = {x: _x, y: _y};
-		this.mw = _mw;
-		this.mh = _mh;
+		this.pos = clony(_pos);
 		this.w = _ps;
 
 		this.moves = Array(clony(this.pos));
 		this.animationFrame = 0;
-		this.sprite = _sprite;
-		this.elementId = e_id;
 		this.isMoving = false;
 		this.direction = {x: 0, y: 0};
 		this.takenObjectives = Array();
+		this.objectiveNbr = 1;
 	}
 
 	move(_x, _y) {
-		if (this.type === "EARTH")
+		if (this.type === "earth")
 			newAnimation(this.elementAnimation());
-		let x = max(1, min(this.pos.x + _x, this.mw));
-		let y = max(1, min(this.pos.y + _y, this.mh));
+		let x = max(1, min(this.pos.x + _x, gameMap.getMapWidth()));
+		let y = max(1, min(this.pos.y + _y, gameMap.getMapHeight()));
 		this.pos = {x: x, y: y};
 		this.savePos();
 		this.isMoving = true;
@@ -50,7 +47,7 @@ class Player {
 
 	getNMove(nb) {
 		if (this.moves.length > nb) {
-			if (this.type === "EARTH")
+			if (this.type === "earth")
 				newAnimation(this.elementAnimation());
 			this.direction = {x: this.moves[nb].x - this.pos.x, y: this.moves[nb].y - this.pos.y};
 			this.pos = clony(this.moves[nb]);
@@ -66,7 +63,7 @@ class Player {
 			return (true);
 		let occupied = false;
 		switch (this.type) {
-			case "AIR":
+			case "air":
 				if (move_number + 1 < this.moves.length) {
 					let currentTile = clony(this.moves[move_number + 1]);
 					while (gameMap.isMovableDirection(currentTile, this.direction)) {
@@ -76,7 +73,7 @@ class Player {
 					}
 				}
 				break;
-			case "FIRE":
+			case "fire":
 				if (move_number + 1 < this.moves.length) {
 					[{x:-1, y:0}, {x:0, y:-1}, {x:1, y:0}, {x:0, y:1}].forEach((axis, i) => {
 						let currentTile = clony(this.moves[move_number + 1]);
@@ -89,14 +86,14 @@ class Player {
 					});
 				}
 				break;
-			case "EARTH":
+			case "earth":
 				let tiles = this.moves.slice(max(0, move_number - 9), move_number + 1);
 				tiles.forEach((currentTile, i) => {
 					if (comp(pos, currentTile))
 						occupied = true;
 				});
 				break;
-			case "WATER":
+			case "water":
 				if (move_number + 1 < this.moves.length) {
 					[{x:-1, y:0}, {x:-1, y:-1}, {x:0, y:-1}, {x:1, y:-1}, {x:1, y:0},
 					 {x:1, y:1}, {x:0, y:1}, {x:-1, y:1}].forEach((axis, i) => {
@@ -118,7 +115,7 @@ class Player {
 	elementAnimation() {
 		let list = [];
 		switch (this.type) {
-			case "AIR":
+			case "air":
 				let currentTile = clony(this.pos);
 				while (gameMap.isMovableDirection(currentTile, this.direction)) {
 					currentTile = {x: currentTile.x + this.direction.x, y: currentTile.y + this.direction.y};
@@ -146,7 +143,7 @@ class Player {
 					));
 				}
 				break;
-			case "FIRE":
+			case "fire":
 				[{x:-1, y:0}, {x:0, y:-1}, {x:1, y:0}, {x:0, y:1}].forEach((axis, i) => {
 					let currentTile = clony(this.pos);
 					let j = 0;
@@ -174,7 +171,7 @@ class Player {
 					));
 				}
 				break;
-			case "EARTH":
+			case "earth":
 				return (new Animation({tile: this.pos, move_nb: move_number},
 					(anim) => {
 						let w = gameMap.getTilesz();
@@ -187,7 +184,7 @@ class Player {
 					}
 				));
 				break;
-			case "WATER":
+			case "water":
 				[{x:-1, y:0}, {x:-1, y:-1}, {x:0, y:-1}, {x:1, y:-1}, {x:1, y:0},
 				 {x:1, y:1}, {x:0, y:1}, {x:-1, y:1}].forEach((axis, i) => {
 					let currentTile = {x: this.pos.x - this.direction.x, y: this.pos.y - this.direction.y};
@@ -223,7 +220,7 @@ class Player {
 
 	elementAnticipation() {
 		switch (this.type) {
-			case "AIR":
+			case "air":
 				if (move_number + 1 < this.moves.length) {
 					let currentTile = clony(this.moves[move_number + 1]);
 					while (gameMap.isMovableDirection(currentTile, this.direction)) {
@@ -242,7 +239,7 @@ class Player {
 					}
 				}
 				break;
-			case "FIRE":
+			case "fire":
 				if (move_number + 1 < this.moves.length) {
 					[{x:-1, y:0}, {x:0, y:-1}, {x:1, y:0}, {x:0, y:1}].forEach((axis, i) => {
 						let currentTile = clony(this.moves[move_number + 1]);
@@ -264,7 +261,7 @@ class Player {
 					});
 				}
 				break;
-			case "EARTH":
+			case "earth":
 				if (this.moves.length > 1) {
 					let tiles = this.moves.slice(max(0, move_number - 9), move_number + 1);
 					tiles.forEach((tile, i) => {
@@ -277,7 +274,7 @@ class Player {
 					});
 				}
 				break;
-			case "WATER":
+			case "water":
 				if (move_number + 1 < this.moves.length) {
 					[{x:-1, y:0}, {x:-1, y:-1}, {x:0, y:-1}, {x:1, y:-1}, {x:1, y:0},
 					 {x:1, y:1}, {x:0, y:1}, {x:-1, y:1}].forEach((axis, i) => {
@@ -302,13 +299,13 @@ class Player {
 	color(tone) {
 		if (tone === 'dark') {
 			switch (this.type) {
-				case "AIR":
+				case "air":
 					return (color(150, 150, 150));
-				case "FIRE":
+				case "fire":
 					return (color(130, 15, 25));
-				case "EARTH":
+				case "earth":
 					return (color(25, 15, 25));
-				case "WATER":
+				case "water":
 					return (color(50, 50, 130));
 				default:
 					break;
@@ -316,13 +313,13 @@ class Player {
 		}
 		else {
 			switch (this.type) {
-				case "AIR":
+				case "air":
 					return (color(200, 200, 200));
-				case "FIRE":
+				case "fire":
 					return (color(200, 15, 36));
-				case "EARTH":
+				case "earth":
 					return (color(70, 50, 50));
-				case "WATER":
+				case "water":
 					return (color(100, 100, 200));
 				default:
 					break;
@@ -332,21 +329,19 @@ class Player {
 
 	colorWithAlpha(alpha) {
 		switch (this.type) {
-			case "AIR":
+			case "air":
 				return (color(200, 200, 200, alpha * 255));
-			case "FIRE":
+			case "fire":
 				return (color(200, 15, 36, alpha * 255));
-			case "EARTH":
+			case "earth":
 				return (color(36, 15, 36, alpha * 255));
-			case "WATER":
+			case "water":
 				return (color(100, 100, 200, alpha * 255));
 			default:
 				break;
 		}
 	}
 
-//				console.log(lineToMovesMap[gameMap.getTileAt(currentTile.x, currentTile.y)] &
-//						1 << );
 	showDirection(move_number) {
 		stroke('#EE2');
 		if (!this.isMoving && this.moves.length > move_number)
@@ -356,41 +351,46 @@ class Player {
 				this.w, this.w,
 				spriteSz * (((this.direction.x ? (this.direction.x < 0 ? 0 : 2) :
 					(this.direction.y < 0 ? 1 : 3)) + 2)),
-				spriteSz * this.elementId, spriteSz, spriteSz);
+				spriteSz * elements[this.type], spriteSz, spriteSz);
 	}
 
 	show() {
 		if (this.isMoving) {
 			let framePos = {x: this.pos.x - (this.direction.x * (1 - this.animationFrame / 15)),
 							y: this.pos.y - (this.direction.y * (1 - this.animationFrame / 15))};
-			image(this.sprite, (framePos.x) * this.w, (framePos.y) * this.w,
+			image(sprites, (framePos.x) * this.w, (framePos.y) * this.w,
 				this.w, this.w, (2 + floor(this.animationFrame / 2)) * spriteSz,
-				this.elementId * 4 * spriteSz + spriteSz *
+				elements[this.type] * 4 * spriteSz + spriteSz *
 				(((this.direction.x == 1) ? 1 : 0) + ((this.direction.x == -1) ? 2 : 0) +
 				((this.direction.y == 1) ? 0 : 0) + ((this.direction.y == -1) ? 3 : 0)), spriteSz, spriteSz);
-			if (this.animationFrame === 0 && this.type === "WATER")
+//			image(sprites, (framePos.x) * this.w, (framePos.y) * this.w,
+//				this.w, this.w, (floor(this.animationFrame / 8) % 3) * spriteSz,
+//				elements[this.type] * 4 * spriteSz + spriteSz *
+//				(((this.direction.x == 1) ? 1 : 0) + ((this.direction.x == -1) ? 2 : 0) +
+//				((this.direction.y == 1) ? 0 : 0) + ((this.direction.y == -1) ? 3 : 0)), spriteSz, spriteSz);
+			if (this.animationFrame === 0 && this.type === "water")
 				newAnimation(this.elementAnimation());
-			if (this.animationFrame === 6 && this.type === "AIR")
+			if (this.animationFrame === 6 && this.type === "air")
 				newAnimation(this.elementAnimation());
-			if (this.animationFrame === 15 && this.type === "FIRE")
+			if (this.animationFrame === 15 && this.type === "fire")
 				newAnimation(this.elementAnimation());
 			if (this.animationFrame++ >= 15) {
 				if (this.moves.length > move_number + 1)
 					this.direction = {x: this.moves[move_number + 1].x - this.pos.x,
 										y: this.moves[move_number + 1].y - this.pos.y};
-				else if (players[activePlayerId] != this)
+				else if (players[activePlayer] != this)
 					this.direction = {x: 0, y: 0};
 				this.isMoving = false;
-				testForObjectives(this.elementId);
+				testForObjectives(this.type);
 			}
 		} else {
 			fill(this.color());
-			image(this.sprite, this.pos.x * this.w, this.pos.y * this.w, this.w, this.w,
+			image(sprites, this.pos.x * this.w, this.pos.y * this.w, this.w, this.w,
 				floor(this.animationFrame / 8) * spriteSz,
-				this.elementId * 4 * spriteSz, spriteSz, spriteSz);
-			image(this.sprite, this.pos.x * this.w, this.pos.y * this.w, this.w, this.w,
+				elements[this.type] * 4 * spriteSz, spriteSz, spriteSz);
+			image(sprites, this.pos.x * this.w, this.pos.y * this.w, this.w, this.w,
 				floor(this.animationFrame / 8) * spriteSz,
-				this.elementId * 4 * spriteSz, spriteSz, spriteSz);
+				elements[this.type] * 4 * spriteSz, spriteSz, spriteSz);
 			this.animationFrame = (this.animationFrame + 1) % 24;
 		}
 	}

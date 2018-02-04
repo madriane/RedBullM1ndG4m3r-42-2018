@@ -1,29 +1,13 @@
-var lineToMovesMap = [
-	1 | 2 | 4 | 8,
-	1 | 4 | 8,
-	1 | 2 | 4,
-	2 | 4 | 8,
-	1 | 2 | 8,
-	1 | 2,
-	2 | 4,
-	1 | 8,
-	4 | 8,
-	2 | 8,
-	1 | 4,
-	2,
-	8,
-	1,
-	4,
-	0
-];
+function pos(_x, _y) {
+	return ({x: _x, y: _y});
+}
 
 class Map {
-	constructor(_texture, _block_ids, _nbr_player) {
-		this.texture = _texture;
+	constructor(_texture, _block_ids, objectives, _nbr_player) {
 		this.block_ids = _block_ids;
 		this.nbr_player = _nbr_player;
 		this.tiles_sz;
-		this.objectives = [];
+		this.objectives = objectives;
 		this.game_canvas = [];
 	}
 
@@ -45,39 +29,41 @@ class Map {
 		this.border_x = ((x > this.game_canvas.w) ? ((x - this.game_canvas.w) / 2) : null);
 		this.border_y = ((y > this.game_canvas.h) ? ((y - this.game_canvas.h) / 2) : null);
 
-		this.canvas = createCanvas(this.game_canvas.w, this.game_canvas.h);
-		this.canvas.drawingContext.canvas.style.imageRendering = 'crisp_edge';
-
-		for (let i = 0; i < this.nbr_player; i++)
-			this.objectives.push(Array(this.getNewObjective()));
-	}
-
-	isMovable(player_id, players, destination) {
-		if (typeof destination === 'object')
-			;//teleport
-		else {
-			let playerpos = players[player_id].pos;
-			let move = lineToMovesMap[parseInt(floor(this.block_ids[playerpos.y][playerpos.x] / 16))];
-			if (move & (1 << destination))
-			{
-				let dest = {x: playerpos.x - (destination == 0 ? 1 : 0) + (destination == 2 ? 1 : 0), y: playerpos.y - (destination == 1 ? 1 : 0) + (destination == 3 ? 1 : 0)};
-				let movable = true;
-				players.forEach((p, i) => {
-					if (i != player_id && p.willBeOccupied(dest, move_number))
-						movable = false;
-				});
-				if (movable)
-					return (true);
-				else
-					return (false);
-			}
-			else
-				return (false);
+		for (e in elements) {
+			if (this.objectives[e].length == 0)
+				this.objectives[e].push(Array(this.getNewObjective()));
 		}
 	}
 
+	isObstacle(x, y) {
+		if (x < 0 || x >= this.getMapWidth() || y < 0 || y >= this.getMapHeight())
+			return (true);
+		if (this.block_ids[y][x] / 3 < 1)
+			return (false);
+		return (true);
+	}
+
+	isMovable(player_elem, destination) {
+		let playerpos = players[player_elem].pos;
+		if (!this.isObstacle(playerpos.x + destination.x, playerpos.y + destination.y))
+		{
+			let dest = pos(playerpos.x + destination.x, playerpos.y + destination.y);
+			let movable = true;
+			for (var e in players) {
+				if (e != player_elem && players[e].willBeOccupied(dest, move_number))
+					movable = false;
+			}
+			if (movable)
+				return (true);
+			else
+				return (false);
+		}
+		else
+			return (false);
+	}
+
 	drawMap() {
-		blockIds.forEach((row, i)=>{
+		this.block_ids.forEach((row, i)=>{
 			row.forEach((texture_id, j)=>{
 				this.drawTile(j * this.getTilesz(), i * this.getTilesz(), texture_id)
 			})
@@ -85,9 +71,9 @@ class Map {
 	}
 
 	drawTile(x, y, tile_nb) {
-		let sx = this.texture.height / 16 * (tile_nb % 16);
-		let sy = this.texture.height / 16 * parseInt(tile_nb / 16);
-		image(this.texture, x - 1, y - 1, this.getTilesz() + 2, this.getTilesz() + 2, sx + 1, sy + 1, this.texture.height / 16 - 1, this.texture.height / 16 - 1);
+		let sx = 32 * (tile_nb % 3);
+		let sy = 32 * floor(tile_nb / 3);
+		image(img, x - 1, y - 1, this.getTilesz() + 2, this.getTilesz() + 2, sx + 1, sy + 1, 32 - 1, 32 - 1);
 	}
 
 	getTilesz() {
@@ -114,21 +100,15 @@ class Map {
 			return (false);
 		else {
 			if (abs(direction.x) === abs(direction.y) &&
-				(((1 << (direction.x < 0 ? 0 : 2)) | (1 << (direction.y < 0 ? 1 : 3))) !=
-				(lineToMovesMap[gameMap.getTileAt(tile.x, tile.y)] &
-				((1 << (direction.x < 0 ? 0 : 2)) | (1 << (direction.y < 0 ? 1 : 3)))) ||
-				0 == (lineToMovesMap[gameMap.getTileAt(tile.x, tile.y + direction.y)] &
-				(1 << (direction.x < 0 ? 0 : 2))) ||
-				0 == (lineToMovesMap[gameMap.getTileAt(tile.x + direction.x, tile.y)] &
-				(1 << (direction.y < 0 ? 1 : 3)))))
+				(this.isObstacle(tile.x + direction.x, tile.y) ||
+				this.isObstacle(tile.x, tile.y + direction.y) ||
+				this.isObstacle(tile.x + direction.x, tile.y + direction.y)))
 				return (false);
 			if (abs(direction.x) > abs(direction.y) &&
-				0 == (lineToMovesMap[gameMap.getTileAt(tile.x, tile.y)] &
-				(1 << (direction.x < 0 ? 0 : 2))))
+				this.isObstacle(tile.x + direction.x, tile.y))
 				return (false);
 			else if (abs(direction.x) < abs(direction.y) &&
-				0 == (lineToMovesMap[gameMap.getTileAt(tile.x, tile.y)] &
-				(1 << (direction.y < 0 ? 1 : 3))))
+				this.isObstacle(tile.x, direction.y + tile.y))
 				return (false);
 		}
 		return (true);
@@ -146,6 +126,18 @@ class Map {
 		return this.objectives;
 	}
 
+	objectiveExists(objective) {
+	let found = false;
+	for (var elem in this.objectives) {
+		this.objectives[elem].forEach((obj, i)=>{
+			if (comp(obj, objective)) {
+				found = true;
+			}
+		});
+	}
+	return (found);
+	}
+
 	getNewObjective() {
 		let found = true;
 		let _x, _y, newobjective;
@@ -154,7 +146,7 @@ class Map {
 			_x = floor(random(this.getMapWidth() - 2)) + 1;
 			_y = floor(random(this.getMapHeight() - 2)) + 1;
 			newobjective = {x: _x, y: _y};
-			found = isIn2DArray(newobjective, this.objectives);
+			found = this.objectiveExists(newobjective);
 			if (floor(this.block_ids[_y][_x] / 16) === 15)
 				found = true;
 		}

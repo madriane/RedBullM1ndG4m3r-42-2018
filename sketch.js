@@ -2,74 +2,143 @@
 var players;
 var gameMap;
 var spriteSz = 128;
+var gameStarted = false;
+
+var move_number;
+var gameOver;
+var activePlayer;
+var animationFrame;
+var animations;
+var playersNbr;
+var playersStart;
+
+var tileSize;
+var h;
+var w;
+
+var elements = {
+	air: 0,
+	water: 1,
+	earth: 2,
+	fire: 3
+	};
+var elementsArray = [
+	'air',
+	'water',
+	'earth',
+	'fire'
+	];
 
 function preload() {
-	img = loadImage('tiles_grey_bg.png');
+	menu = loadImage('menu.png');
+	img = loadImage('tilesetbase.png');
 	sprites = loadImage('sprite.png');
 	misc = loadImage('misc.png');
 	ghost_fx = loadImage('ghost_fx.png');
 }
 
 function setup() {
+	var win = window,
+	d = document,
+	e = d.documentElement,
+	g = d.getElementsByTagName('body')[0],
+	x = (win.innerWidth || e.clientWidth || g.clientWidth) - 20,
+	y = (win.innerHeight|| e.clientHeight|| g.clientHeight) - 20;
+
+	let size_x = 24;
+	let size_y = 16;
+
+	tileSize = min(x / size_x, y / size_y);
+
+	w = tileSize * size_x;
+	h = tileSize * size_y;
+
+	canvas = createCanvas(w, h);
+//	loadGame(map1);
+}
+
+function loadGame(map) {
+	gameStarted = true;
 	move_number = 0;
 	gameOver = false;
-	blockIds = map1;
-	activePlayerId = 0;
+	activePlayer = 'air';
 	animationFrame = 0;
 	animations = [];
+	playersNbr = map.pawns;
+	playersStart = map.starts;
 
-	gameMap = new Map(img, blockIds, 4);
+	gameMap = new Map(img, map.tiles, map.objectives, playersNbr);
 	gameMap.init();
 	max_move_nbr = floor((gameMap.getMapWidth() + gameMap.getMapHeight() * 1.5) / 5) * 5;
-	players = [
-		new Player('AIR', 1, 1, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 0),
-		new Player('WATER', 1, gameMap.getMapHeight() - 2, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 1),
-		new Player('EARTH', gameMap.getMapWidth() - 2, 1, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 2),
-		new Player('FIRE', gameMap.getMapWidth() - 2, gameMap.getMapHeight() - 2, gameMap.getMapWidth(), gameMap.getMapHeight(), gameMap.getTilesz(), sprites, 3)
-	];
+	players = {};
+	for (e in elements) {
+		if (elements[e] < playersNbr) {
+			players[e] = new Player(e, playersStart[e], gameMap.getTilesz(), 0);
+		}
+	}
 }
 
 function draw() {
-//		Show map
 	background(2);
 	stroke(0);
 	fill(51);
-	rect(0, 0, gameMap.getMapWidth() * gameMap.getTilesz(), gameMap.getMapHeight() * gameMap.getTilesz());
 	stroke(255);
+	if (gameStarted)
+		drawGame();
+	else
+		drawMenu();
+	animationFrame++;
+}
+
+function drawMenu() {
+	rect(0, 0, w * tileSize, h * tileSize);
+	image(menu, w / 2 - tileSize * 9.5, 2 * tileSize, tileSize * 19, tileSize * 2, 0, 0, spriteSz * 38, spriteSz * 4);
+	if (mouseX > w / 2 - tileSize * 3.5 && mouseX < w / 2 - tileSize * 3.5 + tileSize * 7 &&
+		mouseY > tileSize * 10 && mouseY < tileSize * 10 + tileSize * 1.5)
+		image(menu, w / 2 - tileSize * 3.5, 10 * tileSize, tileSize * 7, tileSize * 1.5, 0, 8 * spriteSz, 14 * spriteSz, 3 * spriteSz);
+	else
+		image(menu, w / 2 - tileSize * 3.5, 10 * tileSize, tileSize * 7, tileSize * 1.5, 0, 5 * spriteSz, 14 * spriteSz, 3 * spriteSz);
+}
+
+function drawGame() {
+	rect(0, 0, gameMap.getMapWidth() * gameMap.getTilesz(), gameMap.getMapHeight() * gameMap.getTilesz());
+//		Show map
 	gameMap.drawMap();
 //		Show objectives
-	players.forEach((p, i) => {
-		fill(p.colorWithAlpha(i === activePlayerId ? 1 : 0.5));
-		gameMap.getObjectives(i).forEach((objective, j) => {
-			if (!isInArray(objective, p.takenObjectives)) {
+	for (var e in players) {
+		fill(players[e].colorWithAlpha(e === activePlayer ? 1 : 0.5));
+		for (var i = 0; i < players[e].objectiveNbr; i++) {
+			var objective = gameMap.getObjectives(e)[i];
+			if (!isInArray(objective, players[e].takenObjectives)) {
 				image(sprites, objective.x * gameMap.getTilesz(), objective.y * gameMap.getTilesz(),
 					gameMap.getTilesz(), gameMap.getTilesz(),
-					floor((animationFrame % 20) / 4 + 3) * spriteSz, (16 + p.elementId) * spriteSz,
+					floor((animationFrame % 20) / 4 + 3) * spriteSz, (16 + elements[e]) * spriteSz,
 					spriteSz, spriteSz);
-				if (i === activePlayerId)
+				if (e === activePlayer)
 					image(misc, objective.x * gameMap.getTilesz(), objective.y * gameMap.getTilesz(),
-						gameMap.getTilesz(), gameMap.getTilesz(), 1 * spriteSz, p.elementId * spriteSz,
+						gameMap.getTilesz(), gameMap.getTilesz(), 1 * spriteSz, elements[e] * spriteSz,
 						spriteSz, spriteSz);
 			}
 			else {
 				image(sprites, objective.x * gameMap.getTilesz(), objective.y * gameMap.getTilesz(),
 					gameMap.getTilesz(), gameMap.getTilesz(),
-					floor((animationFrame % 12) / 4) * spriteSz, (16 + p.elementId) * spriteSz,
+					floor((animationFrame % 12) / 4) * spriteSz, (16 + elements[e]) * spriteSz,
 					spriteSz, spriteSz);
 			}
-		});
-	});
+		}
+	}
 //		Show players
-	players.forEach((p, i)=>{
-		if (activePlayerId === i)
+	for (var e in players) {
+		var p = players[e];
+		if (activePlayer != e && !p.isMoving)
+			p.elementAnticipation();
+		if (activePlayer != e)
+			p.showDirection(move_number + 1);
+		p.show();
+		if (activePlayer === e)
 			image(misc, p.pos.x * gameMap.getTilesz(), p.pos.y * gameMap.getTilesz(),
 				gameMap.getTilesz(), gameMap.getTilesz(), 0, p.elementId * spriteSz, spriteSz, spriteSz);
-		else
-			p.showDirection(move_number + 1);
-		if (activePlayerId != i && !p.isMoving)
-			p.elementAnticipation();
-		p.show();
-	});
+	}
 	animations.forEach((anim, i) => {
 		anim.run();
 		if (anim.shouldStop())
@@ -83,8 +152,6 @@ function draw() {
 		fill('#E23');
 		text('Game Over', 350, 30);
 	}
-
-	animationFrame++;
 }
 
 function newAnimation(anim) {
@@ -93,68 +160,125 @@ function newAnimation(anim) {
 	}
 }
 
-function keyPressed() {
-	if (players[activePlayerId].isMoving || gameOver)
-		return ;
-	let player = players[activePlayerId];
-	switch (keyCode) {
-		case 37:
-			if (!gameMap.isMovable(activePlayerId, players, 0))
-				return ;
-			player.move(-1, 0);
-			break;
-		case 38:
-			if (!gameMap.isMovable(activePlayerId, players, 1))
-				return ;
-			player.move(0, -1);
-			break;
-		case 39:
-			if (!gameMap.isMovable(activePlayerId, players, 2))
-				return ;
-			player.move(1, 0);
-			break;
-		case 40:
-			if (!gameMap.isMovable(activePlayerId, players, 3))
-				return ;
-			player.move(0, 1);
-			break;
-		default:
-			return ;
-	}
-	players.forEach((p, i)=> {
-		if (i != activePlayerId)
-			p.getNMove(move_number + 1);
-	});
-	move_number++;
+function mouseClicked() {
+	if (!gameStarted && mouseX > w / 2 - tileSize * 3.5 && mouseX < w / 2 - tileSize * 3.5 + tileSize * 7 &&
+		mouseY > tileSize * 10 && mouseY < tileSize * 10 + tileSize * 1.5)
+		loadGame(CastleRock);
 }
 
-function testForObjectives(elementId) {
-	player = players[elementId];
-	if (isInArray(player.pos, gameMap.getObjectives(elementId))
+function keyPressed() {
+	if (gameStarted) {
+		if (players[activePlayer].isMoving || gameOver)
+			return ;
+		let player = players[activePlayer];
+		switch (keyCode) {
+			case 37:
+				if (!gameMap.isMovable(activePlayer, pos(-1, 0)))
+					return ;
+				player.move(-1, 0);
+				break;
+			case 38:
+				if (!gameMap.isMovable(activePlayer, pos(0, -1)))
+					return ;
+				player.move(0, -1);
+				break;
+			case 39:
+				if (!gameMap.isMovable(activePlayer, pos(1, 0)))
+					return ;
+				player.move(1, 0);
+				break;
+			case 40:
+				if (!gameMap.isMovable(activePlayer, pos(0, 1)))
+					return ;
+				player.move(0, 1);
+				break;
+			default:
+				return ;
+		}
+		for (e in elements) {
+			if (e != activePlayer)
+				players[e].getNMove(move_number + 1);
+		}
+		move_number++;
+	}
+}
+
+function touchStarted() {
+	if (touches.length == 0)
+		return ;
+	let direction = pos(touches[0].x, touches[0].y);
+	if (gameStarted) {
+		if (players[activePlayer].isMoving || gameOver)
+			return ;
+		direction = (((this.direction.x ? (this.direction.x < 0 ? 0 : 2) :
+					(this.direction.y < 0 ? 1 : 3)) + 2));
+		let player = players[activePlayer];
+		switch (direction) {
+			case 0:
+				if (!gameMap.isMovable(activePlayer, pos(-1, 0)))
+					return ;
+				player.move(-1, 0);
+				break;
+			case 1:
+				if (!gameMap.isMovable(activePlayer, pos(0, -1)))
+					return ;
+				player.move(0, -1);
+				break;
+			case 2:
+				if (!gameMap.isMovable(activePlayer, pos(1, 0)))
+					return ;
+				player.move(1, 0);
+				break;
+			case 3:
+				if (!gameMap.isMovable(activePlayer, pos(0, 1)))
+					return ;
+				player.move(0, 1);
+				break;
+			default:
+				return ;
+		}
+		for (e in elements) {
+			if (e != activePlayer)
+				players[e].getNMove(move_number + 1);
+		}
+		move_number++;
+	} else {
+		if (!gameStarted && direction.x > w / 2 - tileSize * 3.5 && direction.x < w / 2 - tileSize * 3.5 + tileSize * 7 &&
+			direction.y > tileSize * 10 && direction.y < tileSize * 10 + tileSize * 1.5)
+			loadGame(CastleRock);
+	}
+}
+
+function testForObjectives(element) {
+	player = players[element];
+	if (isInArray(player.pos, gameMap.getObjectives(element).slice(0, player.objectiveNbr))
 		&& !isInArray(player.pos, player.takenObjectives)) {
 		player.takenObjectives.push(player.pos);
 	}
-	if (elementId === activePlayerId &&
-		player.takenObjectives.length === gameMap.getObjectives(activePlayerId).length)
+	if (element === activePlayer &&
+		player.takenObjectives.length === player.objectiveNbr)
 	{
 		move_number = 0;
 		animations = [];
-		gameMap.getNextObjectives(activePlayerId);
-		activePlayerId = (activePlayerId + 1) % players.length;
-		if (activePlayerId === 0) {
+		player.objectiveNbr++;
+		if (player.objectiveNbr > gameMap.getObjectives(activePlayer).length)
+			gameMap.getNextObjectives(activePlayer);
+		activePlayer = elementsArray[(elements[activePlayer] + 1) % elementsArray.length];
+		if (activePlayer === 'air') {
 			max_move_nbr += 10;
 		}
-		players[activePlayerId].clearOldMoves();
-		players.forEach((p, i)=> {
-			p.clearObjectives();
-			p.resetPos();
-		});
+		players[activePlayer].clearOldMoves();
+		for (e in elements) {
+			players[e].clearObjectives();
+			players[e].resetPos();
+		}
 	}
 	else {
 		let canMove = false;
-		for (let i = 0; i < 4; i++)
-			if (gameMap.isMovable(activePlayerId, players, i))
+		[{x:-1, y:0}, {x:0, y:-1}, {x:1, y:0}, {x:0, y:1}].forEach((axis, i) => {
+			if (gameMap.isMovable(activePlayer, axis))
 				canMove = true;
+		});
 		if (canMove === false || move_number === max_move_nbr)
 			gameOver = true;
 	}
@@ -173,14 +297,3 @@ function isInArray(value, arr) {
 	return (found);
 }
 
-function isIn2DArray(value, arr) {
-	let found = false;
-	arr.forEach((elems, i)=>{
-		elems.forEach((elem, i)=>{
-			if (comp(elem, value)) {
-				found = true;
-			}
-		});
-	});
-	return (found);
-}
